@@ -40,7 +40,7 @@ contract ERC1155 is IERC1155, IERC1155TokenReceiver{
     } 
     
     function safeTransferFrom(address _from, address _to, uint256 _id, uint256 _value, bytes calldata _data) external override{
-        require(_to != address(0));
+        _isZero(_to, _from);
         require(_balance[_from][_id] >= _value);
         require(_approv[_from][msg.sender] || _from == msg.sender);
         _balance[_from][_id] -= _value;
@@ -50,7 +50,7 @@ contract ERC1155 is IERC1155, IERC1155TokenReceiver{
     }
 
     function safeBatchTransferFrom(address _from, address _to, uint256[] calldata _ids, uint256[] calldata _values, bytes calldata _data) external override{
-        require(_to != address(0));
+        _isZero(_to, _from);
         require(_ids.length != _values.length);
         require(_approv[_from][msg.sender] || _from == msg.sender);
         for (uint256 i = 0; i < _ids.length; ++i) {
@@ -63,21 +63,21 @@ contract ERC1155 is IERC1155, IERC1155TokenReceiver{
     }
 
     function balanceOf(address _owner, uint256 _id) external override view returns (uint256){
-        require(_owner != address(0));
+        _isZero(_owner);
         return _balance[_owner][_id];
     }
 
     function balanceOfBatch(address[] calldata _owners, uint256[] calldata _ids) external override view returns (uint256[] memory){
         uint256[] memory _balances;
         for (uint256 i = 0; i < _owners.length; ++i) {
-            require(_owners[i] != address(0));
+            _isZero(_owners[i]);
             _balances[i] = _balance[_owners[i]][_ids[i]]; 
         }
         return _balances;
     }
 
     function setApprovalForAll(address _operator, bool _approved) external override{
-        require(_operator != address(0));
+        _isZero(_operator);
         require(msg.sender != _operator);
 
         _approv[msg.sender][_operator] = _approved;
@@ -86,6 +86,14 @@ contract ERC1155 is IERC1155, IERC1155TokenReceiver{
 
     function isApprovedForAll(address _owner, address _operator) external override view returns (bool){
         return _approv[_owner][_operator];
+    }
+
+    function _isZero(address to, address from) internal {
+        require(to != address(0) && from != address(0));
+    }
+
+    function _isZero(address to) internal {
+        require(to != address(0));
     }
 
     function _checkOnERC1155Received(
