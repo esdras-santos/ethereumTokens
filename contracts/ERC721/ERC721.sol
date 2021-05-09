@@ -27,7 +27,7 @@ contract ERC721 is IERC721, IERC721Receiver{
     }
 
     function balanceOf(address owner) external override view returns (uint256 balance){
-        _isZero(owner);
+        require(owner != address(0));
         return _balance[owner];
     }
 
@@ -45,26 +45,27 @@ contract ERC721 is IERC721, IERC721Receiver{
     }
 
     function approve(address to, uint256 tokenId) external override{
-        _isZero(to, _owner[tokenId]);
+        require(to != address(0));
+        require(_owner[tokenId] != address(0));
         require(_owner[tokenId] == msg.sender);
         _approved[tokenId] = to;
         emit Approval(msg.sender, to, tokenId);
     }
 
     function getApproved(uint256 tokenId) external override view returns (address operator){
-        _isZero(_owner[tokenId]);
+        require(_owner[tokenId] != address(0));
         operator = _approved[tokenId]; 
     }
 
-    function setApprovalForAll(address operator, bool approved) external override{
-        _isZero(operator);
+    function setApprovalForAll(address operator, bool _approved) external override{
+        require(operator != address(0));
         require(operator != msg.sender);
-        _approvedAll[msg.sender][operator] = approved;
-        emit ApprovalForAll(msg.sender, operator, approved);
+        _approvedAll[msg.sender][operator] = _approved;
+        emit ApprovalForAll(msg.sender, operator, _approved);
     }
 
     function isApprovedForAll(address owner, address operator) external override view returns (bool){
-        _isZero(owner, operator);
+        require(owner != address(0) && operator != address(0));
         return _approvedAll[owner][operator];
     }
 
@@ -72,24 +73,16 @@ contract ERC721 is IERC721, IERC721Receiver{
         _transfer(from,to, tokenId);
         require(_checkOnERC721Received(msg.sender,from,to,tokenId, data));
     }
-
-    function _isZero(address to, address from) internal {
-        require(to != address(0) && from != address(0));
-    }
-
-    function _isZero(address to) internal {
-        require(to != address(0));
-    }
-
+    
     function _transfer(address from, address to, uint256 tokenId) internal{
-        _isZero(to, from);
-        _isZero(_owner[tokenId]);
-        require(_approv[tokenId] == msg.sender || from == msg.sender || _approvedAll[from][msg.sender]);
+        require(from != address(0) && to != address(0));
+        require(_owner[tokenId] != address(0));
+        require(_approved[tokenId] == msg.sender || from == msg.sender || _approvedAll[from][msg.sender]);
         require(_owner[tokenId] == from);
         _balance[from] -= 1;
         _balance[to] += 1;
         _owner[tokenId] = to;
-        _approv[tokenId] = address(0);
+        _approved[tokenId] = address(0);
         emit Transfer(from, to, tokenId);
     }
 
